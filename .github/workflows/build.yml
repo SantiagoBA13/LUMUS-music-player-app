@@ -2,8 +2,7 @@ name: Build LUMUS APK
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
   build:
@@ -11,45 +10,70 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v3
         with:
           node-version: 18
 
       - name: Install dependencies
         run: |
           npm install
-          npm install -D typescript
-          npm install @capacitor/core @capacitor/cli @capacitor/android
+          npm install @capacitor/core @capacitor/cli
+          npm install typescript --save-dev
+
+      - name: Initialize Capacitor
+        run: |
+          npx cap init "LUMUS Music Player" "com.lumus.musicplayer" --web-dir=www
+
+      - name: Create base web folder
+        run: |
+          mkdir -p www
+          echo "<h1>LUMUS</h1>" > www/index.html
 
       - name: Add Android platform
         run: npx cap add android
 
-      # 🔥 INYECTAMOS EL PLUGIN KOTLIN
-      - name: Inject Audio Engine Plugin
+      # =========================
+      # INJECT NATIVE AUDIO ENGINE
+      # =========================
+
+      - name: Create Audio Engine Plugin
         run: |
           mkdir -p android/app/src/main/java/com/lumus/musicplayer
-          cat > android/app/src/main/java/com/lumus/musicplayer/AudioEnginePlugin.kt << 'EOF'
+          cat << 'EOF' > android/app/src/main/java/com/lumus/musicplayer/AudioEnginePlugin.kt
           package com.lumus.musicplayer
 
-          import com.getcapacitor.*
+          import android.media.audiofx.Equalizer
+          import com.getcapacitor.Plugin
           import com.getcapacitor.annotation.CapacitorPlugin
 
           @CapacitorPlugin(name = "AudioEngine")
-          class AudioEnginePlugin : Plugin()
+          class AudioEnginePlugin : Plugin() {
+              private var equalizer: Equalizer? = null
+
+              fun init(sessionId: Int) {
+                  equalizer = Equalizer(0, sessionId)
+                  equalizer?.enabled = true
+              }
+
+              fun setBand(band: Short, level: Short) {
+                  equalizer?.setBandLevel(band, level)
+              }
+          }
           EOF
 
-      # 🔥 REGISTRAMOS EL PLUGIN EN MAIN ACTIVITY
       - name: Register Audio Engine Plugin
         run: |
-          sed -i 's/import com.getcapacitor.BridgeActivity;/import com.getcapacitor.BridgeActivity;\nimport com.lumus.musicplayer.AudioEnginePlugin;/' android/app/src/main/java/com/getcapacitor/myapp/MainActivity.kt
+          MAIN_ACTIVITY=$(find android -name MainActivity.kt)
 
-          sed -i 's/class MainActivity : BridgeActivity()/class MainActivity : BridgeActivity() {\n    override fun onCreate(savedInstanceState: android.os.Bundle?) {\n        super.onCreate(savedInstanceState)\n        registerPlugin(AudioEnginePlugin::class.java)\n    }\n}/' android/app/src/main/java/com/getcapacitor/myapp/MainActivity.kt
+          sed -i 's/import com.getcapacitor.BridgeActivity;/import com.getcapacitor.BridgeActivity;\nimport com.lumus.musicplayer.AudioEnginePlugin;/' $MAIN_ACTIVITY
+
+          sed -i 's/class MainActivity : BridgeActivity()/class MainActivity : BridgeActivity() {\n    override fun onCreate(savedInstanceState: android.os.Bundle?) {\n        super.onCreate(savedInstanceState)\n        registerPlugin(AudioEnginePlugin::class.java)\n    }\n}/' $MAIN_ACTIVITY
 
       - name: Sync Capacitor
-        run: npx cap sync android
+        run: npx cap sync
 
       - name: Build APK
         run: |
