@@ -28,6 +28,12 @@ jobs:
 
       # 🔥 AQUÍ INYECTAMOS EL KOTLIN EN EL PROYECTO ANDROID
       - name: Inject Audio Engine Plugin
+      # 🔥 Registrar el plugin en MainActivity
+      - name: Register Audio Engine Plugin
+        run: |
+          sed -i "s/import com.getcapacitor.BridgeActivity;/import com.getcapacitor.BridgeActivity;\nimport com.lumus.musicplayer.AudioEnginePlugin;/" android/app/src/main/java/com/getcapacitor/myapp/MainActivity.kt
+
+          sed -i "s/class MainActivity : BridgeActivity()/class MainActivity : BridgeActivity() {\n    override fun onCreate(savedInstanceState: android.os.Bundle?) {\n        super.onCreate(savedInstanceState)\n        registerPlugin(AudioEnginePlugin::class.java)\n    }\n}/" android/app/src/main/java/com/getcapacitor/myapp/MainActivity.kt
         run: |
           mkdir -p android/app/src/main/java/com/lumus/musicplayer
           cp plugins/audio-engine/AudioEnginePlugin.kt android/app/src/main/java/com/lumus/musicplayer/AudioEnginePlugin.kt
