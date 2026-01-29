@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "echo 'build listo'",
+    "build": "echo build listo",
     "cap:add": "npx cap add android",
     "cap:sync": "npx cap sync android"
   },
@@ -11,5 +11,9 @@
     "@capacitor/android": "^6.0.0",
     "@capacitor/cli": "^6.0.0",
     "@capacitor/core": "^6.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "ts-node": "^10.9.2"
   }
 }
