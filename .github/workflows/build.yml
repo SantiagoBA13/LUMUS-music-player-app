@@ -18,19 +18,10 @@ jobs:
           node-version: 18
 
       - name: Install dependencies
-        run: |
-          npm install
-          npm install @capacitor/core @capacitor/cli
-          npm install typescript --save-dev
+        run: npm install
 
-      - name: Initialize Capacitor
-        run: |
-          npx cap init "LUMUS Music Player" "com.lumus.musicplayer" --web-dir=www
-
-      - name: Create base web folder
-        run: |
-          mkdir -p www
-          echo "<h1>LUMUS</h1>" > www/index.html
+      - name: Sync Capacitor
+        run: npx cap sync
 
       - name: Add Android platform
         run: npx cap add android
@@ -71,9 +62,6 @@ jobs:
           sed -i 's/import com.getcapacitor.BridgeActivity;/import com.getcapacitor.BridgeActivity;\nimport com.lumus.musicplayer.AudioEnginePlugin;/' $MAIN_ACTIVITY
 
           sed -i 's/class MainActivity : BridgeActivity()/class MainActivity : BridgeActivity() {\n    override fun onCreate(savedInstanceState: android.os.Bundle?) {\n        super.onCreate(savedInstanceState)\n        registerPlugin(AudioEnginePlugin::class.java)\n    }\n}/' $MAIN_ACTIVITY
-
-      - name: Sync Capacitor
-        run: npx cap sync
 
       - name: Build APK
         run: |
