@@ -20,11 +20,22 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Install Capacitor
+      - name: Add Android platform
         run: npx cap add android
 
       - name: Sync Capacitor
         run: npx cap sync android
+
+      # 🔥 AQUÍ INYECTAMOS EL KOTLIN EN EL PROYECTO ANDROID
+      - name: Inject Audio Engine Plugin
+        run: |
+          mkdir -p android/app/src/main/java/com/lumus/musicplayer
+          cp plugins/audio-engine/AudioEnginePlugin.kt android/app/src/main/java/com/lumus/musicplayer/AudioEnginePlugin.kt
+
+      # 🔥 Agregamos dependencias necesarias para ExoPlayer
+      - name: Add ExoPlayer dependency
+        run: |
+          echo "dependencies { implementation 'androidx.media3:media3-exoplayer:1.2.1' }" >> android/app/build.gradle
 
       - name: Build APK
         run: |
